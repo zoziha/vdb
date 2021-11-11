@@ -1,0 +1,13 @@
+name = "vdb"
+version = "0.0.1"
+maintainer = "vdb contributors"
+license = "MIT"
+author = "左志华"
+categories = "fpm auxiliary program"
+copyright = "Copyright (c) 左志华"
+
+[dependencies]
+json-fortran = { git="https://github.com/jacobwilliams/json-fortran" }
+
+[dev-dependencies]
+test-drive = { git="https://github.com/fortran-lang/test-drive" }
