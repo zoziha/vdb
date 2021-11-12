@@ -1,3 +1,10 @@
+! fpm test vdb_init --runner build\gfortran_2A42023B310FA28D\test\vdb_get_cmd.exe -- ARGS
+
+!> Results:
+
+! build\gfortran_2A42023B310FA28D\test\vdb_init.exe
+! ARGS
+
 program vdb_get_cmd
 
     implicit none

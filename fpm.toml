@@ -8,6 +8,7 @@ copyright = "Copyright (c) 左志华"
 
 [dependencies]
 json-fortran = { git="https://github.com/jacobwilliams/json-fortran" }
+stdlib = { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm" }
 
 [dev-dependencies]
 test-drive = { git="https://github.com/fortran-lang/test-drive" }
