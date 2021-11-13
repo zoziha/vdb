@@ -29,6 +29,10 @@ Pass the program to be debugged to `vdb` for processing:
 
 ```sh
 fpm test <test_name> --runner vdb
+fpm test <test_name> --runner vdb -- ARGS
+vdb clean
+vdb clean --all
+vdb --list
 ```
 
 ## Links
