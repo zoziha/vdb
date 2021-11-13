@@ -83,19 +83,11 @@ contains
         call json%get("version", version)
         print *, "version: ", trim(version)
         
-        associate(type => version)
-        
-        call json%get("configurations", configuration)
-        call json%get_child(configuration, 1, child)
-        
-        if (associated(child)) then
-        
-            call json%get_child(child, 1, child)
-            call json%get(child, version)
-            ! call json%set(child, 'version', char(version//"."//trim(args(1))))
-            
-        end if
+        call json%get("configurations(1).type", version)
         print *, "type: ", version
+        
+        call json%get("configurations(1).program", version)
+        print *, "program: ", version
         
     end subroutine construct_json_from_fpm
 
