@@ -6,10 +6,19 @@ program vdb
     implicit none
     type(string_type) :: app
     type(string_type), allocatable :: args(:)
+    character(:), allocatable :: type
 
     print *, ""
-    
-    call get_fpm_cmd(app, args)
-    call processing_json(app, args)
+
+    call get_fpm_cmd(app, args, type)
+
+    select case (type)
+    case ("build")
+        call processing_json(app, args)
+    case ("clean")
+        
+        print *, "`clean` command to do :)"//new_line("")
+        
+    end select
 
 end program vdb

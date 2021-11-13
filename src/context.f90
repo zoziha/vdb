@@ -12,20 +12,23 @@ module context
 contains
 
     !> Parse fpm CMD
-    subroutine get_fpm_cmd(app, args)
+    subroutine get_fpm_cmd(app, args, type)
 
+        use stdlib_strings, only: starts_with
+        use forlab_color, only: yellow, default, red
         type(string_type), intent(out) :: app
         type(string_type), intent(out), allocatable :: args(:)
+        character(:), allocatable, intent(out) :: type
         character(80) :: buffer
         integer :: i, nargs
 
         nargs = command_argument_count()
         if (nargs == 0) then
 
+            print *, yellow//"*<WARNNING>*"//default//" Nothing to do .."//NL
             print *, "Usage 1: fpm [options] <test name> --runner vdb [-- ARGS]"
-            print *, "Usage 2: vdb [options] [--<input>] ..."
-            print *, "Nothing to do .."//NL
-            print *, "VDB Version: 0.0.1"
+            print *, "Usage 2: vdb [options] [--<input>] ..."//NL
+50          print *, "VDB Version: 0.0.1"
             print *, "License    : MIT"
             print *, "Repo       : https://github.com/zoziha/vdb"
             print *, "Copyright (c) 2021, VDB Developers"//NL
@@ -33,11 +36,29 @@ contains
 
         end if
 
-        allocate (args(nargs - 1))
-
+        !> Get first argument: maybe a `fpm` app name or a `vdb` argument
         call get_command_argument(1, buffer)
         app = trim(buffer)
+        
+        !> Judge command type
+        if (starts_with(app, "build")) then
+            type = "build"
 
+        elseif (trim(buffer) == "clean") then
+            type = "clean"
+            print *, yellow//"*<WARNNING>*"//default//" `clean` command to do :)"//NL
+            goto 50
+
+        else
+
+            print *, red//"*<ERROR>*"//default//" Unknown command: "//trim(buffer)//NL
+            goto 50
+
+        end if
+
+        allocate (args(nargs - 1))
+        
+        !> Get actual arguments
         if (nargs >= 2) then
 
             do i = 2, nargs
@@ -72,7 +93,8 @@ contains
         if (.not. exist) then
 
             call system("mkdir .vscode")
-            call json%load_from_string("{"//NL// &
+            ! call json%destroy()
+75          call json%load_from_string("{"//NL// &
                                        '    "version": "0.2.0",'//NL// &
                                        '    "configurations": ['//NL// &
                                        '        {'//NL// &
@@ -80,13 +102,21 @@ contains
                                        '            "request": "launch",'//NL// &
                                        '            "name": "Launch(gdb)",'//NL// &
                                        '            "program": "${fileBasenameNoExtension}",'//NL// &
-                                       '            "cwd": "${workspaceRoot}"'//NL// &
+                                       '            "cwd": "${workspaceRoot}",'//NL// &
+                                       '            "programArgs": ""'//NL// &
                                        '        }'//NL// &
                                        '    ]'//NL// &
                                        '}'//NL)
         else
 
             call json%load(filename=dir)
+            block
+                character(:), allocatable :: buffer
+                call json%get("version", buffer, exist)
+                if (.not. exist) then
+                    goto 75
+                end if
+            end block
 
         end if
 
@@ -109,13 +139,14 @@ contains
     subroutine construct_json_from_fpm(json, app, args, found)
 
         use stdlib_strings, only: find, slice, replace_all, to_string
+        use forlab_color, only: cyan, green, default, yellow
         type(json_file), intent(inout) :: json
         type(string_type), intent(in) :: app
         type(string_type), intent(in) :: args(:)
 
         type(json_value), pointer :: configuration
         type(json_value), pointer :: child
-        character(:), allocatable :: version, task_app
+        character(:), allocatable :: status, task_app
         character(:), allocatable :: name, app_
         logical, intent(out) :: found
 
@@ -126,29 +157,36 @@ contains
         app_ = replace_all(char(app), "\", "/")
         name = slice(app_, find(app_, "/", 2) + 1)
 
-        print *, " - Task name : ", name
-        print *, " - App dir   : ", app_
+        print *, cyan//" - Task name  : "//default, name
+        print *, cyan//" - App oath   : "//default, app_
 
         i = 0
         do
             i = i + 1
             call json%get("configurations("//to_string(i)//").name", task_app, found)
-            if (.not. found) exit
 
+            !> Get init task_app name
+            if (.not. found) then
+                call json%get("configurations("//to_string(i - 1)//").name", task_app, found)
+                found = .false.
+                exit
+            end if
+
+            !> Judge task_app name
             found = task_app == name
             if (found) exit
+
         end do
 
-        ! print *, found
+        !> Get all args
+        args_ = ""
+        do j = 1, size(args) - 1
+            args_ = args_//char(args(j))//" "
+        end do
+        args_ = args_//char(args(size(args)))
 
-        !> Update
+        !> Repeat or update
         if (found) then
-
-            args_ = ""
-            do j = 1, size(args) - 1
-                args_ = args_//char(args(j))//" "
-            end do
-            args_ = args_//char(args(size(args)))
 
             block
 
@@ -168,28 +206,31 @@ contains
 
             end block
 
-            ! print *, check
-
+            !> Repeat and not update
             if (all(check)) then
 
                 found = .true.
+                status = yellow//"Repeated"//default
 
+                !> Different and update
             else
 
-                call json%update("configurations("//to_string(i)//").program", app_, found)
+100             call json%update("configurations("//to_string(i)//").program", app_, found)
                 call json%update("configurations("//to_string(i)//").programArgs", args_, found)
                 found = .false.
+                status = green//merge("Updated", "Created", i /= 1 .and. task_app /= "Launch(gdb)")//default
 
             end if
 
-            !> Create
-        else
+            !> Init and create
+        elseif (.not. found .and. i == 2 .and. task_app == "Launch(gdb)") then
 
-            args_ = ""
-            do j = 1, size(args) - 1
-                args_ = args_//char(args(j))//" "
-            end do
-            args_ = args_//char(args(size(args)))
+            call json%update("configurations("//to_string(i - 1)//").name", name, found)
+            i = i - 1
+            goto 100
+
+            !> Create another task
+        else
 
             call json%add("configurations("//to_string(i)//").type", "by-gdb")
             call json%add("configurations("//to_string(i)//").request", "launch")
@@ -197,10 +238,29 @@ contains
             call json%add("configurations("//to_string(i)//").program", app_)
             call json%add("configurations("//to_string(i)//").cwd", "${workspaceRoot}")
             call json%add("configurations("//to_string(i)//").programArgs", args_)
+            status = green//"Created"//default
 
         end if
 
-        print *, " - Args      : ", args_
+        print *, cyan//" - Args       : "//default, args_
+
+        !> Get the task list
+        i = 0
+        args_ = ""
+        do
+            i = i + 1
+            call json%get("configurations("//to_string(i)//").name", task_app, check(1))
+            if (.not. check(1)) exit
+            
+            if (task_app == name) then
+                task_app = green//task_app//default
+            end if
+            
+            args_ = args_//'"'//task_app//'"  '
+        end do
+
+        print *, cyan//" - Task status: "//default, status
+        print *, cyan//" - Task list  : "//default, args_
 
     end subroutine construct_json_from_fpm
 
