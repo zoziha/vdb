@@ -7,6 +7,8 @@ module context
 
     public :: get_fpm_cmd, processing_json
 
+    character(*), parameter :: NL = new_line("")
+
 contains
 
     !> Parse fpm CMD
@@ -41,33 +43,44 @@ contains
 
         type(string_type), intent(in) :: app
         type(string_type), intent(in) :: args(:)
-        type(string_type) :: dir
+        character(:), allocatable :: dir
         type(json_file) :: json
-        character(*), parameter :: NL = new_line("")
         logical :: exist
         integer :: unit
 
-        dir = "example/vscode/launch.json"
+        dir = "./.vscode/launch.json"
+        ! dir = "example/vscode/launch.json"
 
-        inquire (file=char(dir), exist=exist)
+        inquire (file=dir, exist=exist)
 
         !> Verboese = .true. will throw error(warnning) if path not exist
-        call json%initialize(verbose=.true., spaces_per_tab=4)
+        call json%initialize(verbose=.false., spaces_per_tab=4)
 
-        if (exist) then
+        if (.not. exist) then
 
-            call json%load(filename=char(dir))
-            call construct_json_from_fpm(json, app, args)
-            ! call json%print(filename=char(dir))
-            call json%print()
-
-        else
-
-            call system("mkdir "//char(dir))
-            call construct_json_from_fpm(json, app, args)
-            call json%print(filename=char(dir))
+            call system("mkdir "//dir)
+            open (newunit=unit, file=dir, action="write")
+            write (unit, "(a)") "{"//NL// &
+                '    "version": "0.2.0",'//NL// &
+                '    "configurations": ['//NL// &
+                '        {'//NL// &
+                '            "type": "by-gdb",'//NL// &
+                '            "request": "launch",'//NL// &
+                '            "name": "Launch(gdb)",'//NL// &
+                '            "program": "${fileBasenameNoExtension}",'//NL// &
+                '            "cwd": "${workspaceRoot}"'//NL// &
+                '        }'//NL// &
+                '    ]'//NL// &
+                '}'//NL
+            close (unit)
 
         end if
+
+        call json%load(filename=dir)
+        call construct_json_from_fpm(json, app, args)
+        call json%print(filename=dir)
+
+        print *, NL//"JSON::launch.json file updated!"
 
     end subroutine processing_json
 
@@ -86,59 +99,53 @@ contains
         character(:), allocatable :: args_
         integer :: i, j
 
-        call json%get("version", version)
-        print *, "version: ", trim(version)
-
-        call json%get("configurations(1).type", version)
-        print *, "type: ", version
-
-        call json%get("configurations(1).program", version)
-        print *, "program: ", version
-        
         app_ = replace_all(app, "\", "/")
         name = slice(app_, find(app_, "/", 2) + 1)
 
-        print *, name, app_
-        
+        print *, NL//"  - Task name : ", name
+        print *, " - App dir   : ", app_
+
         i = 0
         do
             i = i + 1
             call json%get("configurations("//to_string(i)//").name", task_app, found)
             if (.not. found) exit
-            
+
             found = task_app == char(name)
             if (found) exit
         end do
-        
+
         !> Update
         if (found) then
-        
+
             args_ = ""
             do j = 1, size(args) - 1
                 args_ = args_//char(args(j))//" "
             end do
             args_ = args_//char(args(size(args)))
-        
-            call json%update("configurations("//to_string(i)//").program",char(app_), found)
+
+            call json%update("configurations("//to_string(i)//").program", char(app_), found)
             call json%update("configurations("//to_string(i)//").programArgs", args_, found)
-        
-        !> Create
+
+            !> Create
         else
-        
+
             args_ = ""
             do j = 1, size(args) - 1
                 args_ = args_//char(args(j))//" "
             end do
             args_ = args_//char(args(size(args)))
-            
+
             call json%add("configurations("//to_string(i)//").type", "by-gdb")
             call json%add("configurations("//to_string(i)//").request", "launch")
             call json%add("configurations("//to_string(i)//").name", char(name))
             call json%add("configurations("//to_string(i)//").program", char(app_))
             call json%add("configurations("//to_string(i)//").cwd", "${workspaceRoot}")
             call json%add("configurations("//to_string(i)//").programArgs", args_)
-        
+
         end if
+
+        print *, " - Args      :  ", args_
 
     end subroutine construct_json_from_fpm
 
