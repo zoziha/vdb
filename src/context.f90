@@ -26,9 +26,9 @@ contains
             print *, "Usage 2: vdb [options] [--<input>] ..."
             print *, "Nothing to do .."//NL
             print *, "VDB Version: 0.0.1"
-            print *, "License: MIT"
-            print *, "Repo: https://github.com/zoziha/vdb"
-            print *, "Copyright (c) 2021, VDB Developers"
+            print *, "License    : MIT"
+            print *, "Repo       : https://github.com/zoziha/vdb"
+            print *, "Copyright (c) 2021, VDB Developers"//NL
             stop
 
         end if
@@ -71,33 +71,42 @@ contains
 
         if (.not. exist) then
 
-            call system("mkdir "//dir)
-            open (newunit=unit, file=dir, action="write")
-            write (unit, "(a)") "{"//NL// &
-                '    "version": "0.2.0",'//NL// &
-                '    "configurations": ['//NL// &
-                '        {'//NL// &
-                '            "type": "by-gdb",'//NL// &
-                '            "request": "launch",'//NL// &
-                '            "name": "Launch(gdb)",'//NL// &
-                '            "program": "${fileBasenameNoExtension}",'//NL// &
-                '            "cwd": "${workspaceRoot}"'//NL// &
-                '        }'//NL// &
-                '    ]'//NL// &
-                '}'//NL
-            close (unit)
+            call system("mkdir .vscode")
+            call json%load_from_string("{"//NL// &
+                                       '    "version": "0.2.0",'//NL// &
+                                       '    "configurations": ['//NL// &
+                                       '        {'//NL// &
+                                       '            "type": "by-gdb",'//NL// &
+                                       '            "request": "launch",'//NL// &
+                                       '            "name": "Launch(gdb)",'//NL// &
+                                       '            "program": "${fileBasenameNoExtension}",'//NL// &
+                                       '            "cwd": "${workspaceRoot}"'//NL// &
+                                       '        }'//NL// &
+                                       '    ]'//NL// &
+                                       '}'//NL)
+        else
+
+            call json%load(filename=dir)
 
         end if
 
-        call json%load(filename=dir)
-        call construct_json_from_fpm(json, app, args)
-        call json%print(filename=dir)
+        call construct_json_from_fpm(json, app, args, exist)
+        ! call json%print()
 
-        print *, NL//"JSON::launch.json file updated!"
+        if (.not. exist) then
+
+            call json%print(filename=dir)
+            print *, NL//"JSON::launch.json file updated!"
+
+        else
+
+            print *, NL//"JSON::launch.json file not updated, since the operation is repeated!"
+
+        end if
 
     end subroutine processing_json
 
-    subroutine construct_json_from_fpm(json, app, args)
+    subroutine construct_json_from_fpm(json, app, args, found)
 
         use stdlib_strings, only: find, slice, replace_all, to_string
         type(json_file), intent(inout) :: json
@@ -108,7 +117,7 @@ contains
         type(json_value), pointer :: child
         character(:), allocatable :: version, task_app
         type(string_type) :: name, app_
-        logical :: found
+        logical, intent(out) :: found
         character(:), allocatable :: args_
         integer :: i, j
 
