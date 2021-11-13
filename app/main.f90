@@ -7,6 +7,8 @@ program vdb
     type(string_type) :: app
     type(string_type), allocatable :: args(:)
 
+    print *, ""
+    
     call get_fpm_cmd(app, args)
     call processing_json(app, args)
 

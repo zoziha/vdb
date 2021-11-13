@@ -20,6 +20,19 @@ contains
         integer :: i, nargs
 
         nargs = command_argument_count()
+        if (nargs == 0) then
+
+            print *, "Usage 1: fpm [options] <test name> --runner vdb [-- ARGS]"
+            print *, "Usage 2: vdb [options] [--<input>] ..."
+            print *, "Nothing to do .."//NL
+            print *, "VDB Version: 0.0.1"
+            print *, "License: MIT"
+            print *, "Repo: https://github.com/zoziha/vdb"
+            print *, "Copyright (c) 2021, VDB Developers"
+            stop
+
+        end if
+
         allocate (args(nargs - 1))
 
         call get_command_argument(1, buffer)
@@ -102,7 +115,7 @@ contains
         app_ = replace_all(app, "\", "/")
         name = slice(app_, find(app_, "/", 2) + 1)
 
-        print *, NL//"  - Task name : ", name
+        print *, " - Task name : ", name
         print *, " - App dir   : ", app_
 
         i = 0
