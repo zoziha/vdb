@@ -116,12 +116,14 @@ contains
         type(json_value), pointer :: configuration
         type(json_value), pointer :: child
         character(:), allocatable :: version, task_app
-        type(string_type) :: name, app_
+        character(:), allocatable :: name, app_
         logical, intent(out) :: found
+
+        logical :: check(2)
         character(:), allocatable :: args_
         integer :: i, j
 
-        app_ = replace_all(app, "\", "/")
+        app_ = replace_all(char(app), "\", "/")
         name = slice(app_, find(app_, "/", 2) + 1)
 
         print *, " - Task name : ", name
@@ -133,9 +135,11 @@ contains
             call json%get("configurations("//to_string(i)//").name", task_app, found)
             if (.not. found) exit
 
-            found = task_app == char(name)
+            found = task_app == name
             if (found) exit
         end do
+
+        ! print *, found
 
         !> Update
         if (found) then
@@ -146,8 +150,37 @@ contains
             end do
             args_ = args_//char(args(size(args)))
 
-            call json%update("configurations("//to_string(i)//").program", char(app_), found)
-            call json%update("configurations("//to_string(i)//").programArgs", args_, found)
+            block
+
+                character(:), allocatable :: app, args
+
+                check = .false.
+
+                call json%get("configurations("//to_string(i)//").program", app, found)
+                if (found) then
+                    check(1) = app_ == app
+                end if
+
+                call json%get("configurations("//to_string(i)//").programArgs", args, found)
+                if (found) then
+                    check(2) = args_ == args
+                end if
+
+            end block
+
+            ! print *, check
+
+            if (all(check)) then
+
+                found = .true.
+
+            else
+
+                call json%update("configurations("//to_string(i)//").program", app_, found)
+                call json%update("configurations("//to_string(i)//").programArgs", args_, found)
+                found = .false.
+
+            end if
 
             !> Create
         else
@@ -160,14 +193,14 @@ contains
 
             call json%add("configurations("//to_string(i)//").type", "by-gdb")
             call json%add("configurations("//to_string(i)//").request", "launch")
-            call json%add("configurations("//to_string(i)//").name", char(name))
-            call json%add("configurations("//to_string(i)//").program", char(app_))
+            call json%add("configurations("//to_string(i)//").name", name)
+            call json%add("configurations("//to_string(i)//").program", app_)
             call json%add("configurations("//to_string(i)//").cwd", "${workspaceRoot}")
             call json%add("configurations("//to_string(i)//").programArgs", args_)
 
         end if
 
-        print *, " - Args      :  ", args_
+        print *, " - Args      : ", args_
 
     end subroutine construct_json_from_fpm
 
