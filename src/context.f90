@@ -158,7 +158,7 @@ contains
         name = slice(app_, find(app_, "/", 2) + 1)
 
         print *, cyan//" - Task name  : "//default, name
-        print *, cyan//" - App oath   : "//default, app_
+        print *, cyan//" - App path   : "//default, app_
 
         i = 0
         do
