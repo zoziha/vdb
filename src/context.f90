@@ -5,9 +5,15 @@ module context
     implicit none
     private
 
-    public :: get_fpm_cmd, processing_json
+    public :: get_fpm_cmd, processing_json, vdb_clean
 
     character(*), parameter :: NL = new_line("")
+    character(*), parameter :: dir = ".vscode/launch.json"
+
+    interface
+        module subroutine vdb_clean()
+        end subroutine vdb_clean
+    end interface
 
 contains
 
@@ -39,15 +45,14 @@ contains
         !> Get first argument: maybe a `fpm` app name or a `vdb` argument
         call get_command_argument(1, buffer)
         app = trim(buffer)
-        
+
         !> Judge command type
         if (starts_with(app, "build")) then
             type = "build"
 
         elseif (trim(buffer) == "clean") then
             type = "clean"
-            print *, yellow//"*<WARNNING>*"//default//" `clean` command to do :)"//NL
-            goto 50
+            return
 
         else
 
@@ -57,7 +62,7 @@ contains
         end if
 
         allocate (args(nargs - 1))
-        
+
         !> Get actual arguments
         if (nargs >= 2) then
 
@@ -77,13 +82,9 @@ contains
 
         type(string_type), intent(in) :: app
         type(string_type), intent(in) :: args(:)
-        character(:), allocatable :: dir
         type(json_file) :: json
         logical :: exist
         integer :: unit
-
-        dir = "./.vscode/launch.json"
-        ! dir = "example/vscode/launch.json"
 
         inquire (file=dir, exist=exist)
 
@@ -145,7 +146,6 @@ contains
         type(string_type), intent(in) :: args(:)
 
         type(json_value), pointer :: configuration
-        type(json_value), pointer :: child
         character(:), allocatable :: status, task_app
         character(:), allocatable :: name, app_
         logical, intent(out) :: found
@@ -180,10 +180,17 @@ contains
 
         !> Get all args
         args_ = ""
-        do j = 1, size(args) - 1
-            args_ = args_//char(args(j))//" "
-        end do
-        args_ = args_//char(args(size(args)))
+        if (size(args) == 1) then
+            goto 52
+            
+        elseif (size(args) > 1) then
+        
+            do j = 1, size(args) - 1
+                args_ = args_//char(args(j))//" "
+            end do
+52          args_ = args_//char(args(size(args)))
+
+        end if
 
         !> Repeat or update
         if (found) then
@@ -251,11 +258,11 @@ contains
             i = i + 1
             call json%get("configurations("//to_string(i)//").name", task_app, check(1))
             if (.not. check(1)) exit
-            
+
             if (task_app == name) then
                 task_app = green//task_app//default
             end if
-            
+
             args_ = args_//'"'//task_app//'"  '
         end do
 

@@ -28,11 +28,12 @@ fpm install
 Pass the program to be debugged to `vdb` for processing:
 
 ```sh
-fpm test <test_name> --runner vdb
-fpm test <test_name> --runner vdb -- ARGS
-vdb clean  # Not support yet
-vdb clean --all  # Not support yet
+fpm [options] <test_name> --runner vdb
+fpm [options] <test_name> --runner vdb -- ARGS
+vdb clean  # Remove and backup JSON::launch.json
 ```
+
+![start.gif](https://i.loli.net/2021/11/14/8mSWJc5iBC7KA3I.gif)
 
 ## Links
 
