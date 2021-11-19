@@ -21,6 +21,7 @@ contains
     subroutine get_fpm_cmd(app, args, type)
 
         use stdlib_strings, only: starts_with
+        use stdlib_ascii, only: to_lower
         use forlab_color, only: yellow, default, red
         type(string_type), intent(out) :: app
         type(string_type), intent(out), allocatable :: args(:)
@@ -54,6 +55,9 @@ contains
             type = "clean"
             return
 
+        elseif (trim(buffer) == "--version" .or. to_lower(trim(buffer)) == "-v") then
+            goto 50
+            
         else
 
             print *, red//"*<ERROR>*"//default//" Unknown command: "//trim(buffer)//NL
