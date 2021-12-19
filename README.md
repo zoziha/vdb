@@ -18,9 +18,7 @@ Fortran Package Manager (fpm) is a package manager and build system for Fortran.
 You can build `vdb` using provided `fpm.toml`:
 
 ```sh
-fpm build
-fpm test
-fpm install 
+fpm install --profile release
 ```
 
 ### Configurate `luanch.json` in VS Code with `vdb`

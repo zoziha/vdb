@@ -6,18 +6,19 @@ author = "左志华"
 categories = "fpm auxiliary program"
 copyright = "Copyright (c) 左志华"
 
+
 [dependencies]
+[dependencies.M_attr]
+git = "https://github.com/urbanjost/M_attr.git"
+rev = "608b9d3b40be9ff2590c23d2089781fd4da76344"
+
 [dependencies.json-fortran]
 git = "https://github.com/jacobwilliams/json-fortran"
 rev = "77c9f99d7d5c6a0ec9011f7225db3dbb6894ef6d"
 
-[dependencies.stdlib]
-git = "https://github.com/fortran-lang/stdlib"
-rev = "f9e7853a09a1d1bdfdea2c6a782e8775d8c47c66"
-
-[dependencies.forlab]
-git = "https://github.com/fortran-fans/forlab.git"
-rev = "f82ffe606bd37071dc8142a91f22bfb2dbdbe87a"
+[dependencies.dp-stdlib]
+git = "https://github.com/zoziha/dp-stdlib"
+rev = "d317f4d273cb0fcabf532578a7ec0e4687e18700"
 
 [dev-dependencies]
 [dev-dependencies.test-drive]

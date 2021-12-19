@@ -1,19 +1,13 @@
 module context
 
+    use global, only: nl, dir
     use stdlib_string_type, only: string_type, assignment(=), char, write (formatted)
     use json_module, only: json_file, json_core, json_value
+    use M_attr, only: attr
     implicit none
     private
 
     public :: get_fpm_cmd, processing_json, vdb_clean
-
-    character(*), parameter :: NL = new_line("")
-    character(*), parameter :: dir = ".vscode/launch.json"
-
-    interface
-        module subroutine vdb_clean()
-        end subroutine vdb_clean
-    end interface
 
 contains
 
@@ -22,7 +16,7 @@ contains
 
         use stdlib_strings, only: starts_with
         use stdlib_ascii, only: to_lower
-        use forlab_color, only: yellow, default, red
+        use M_attr, only: attr
         type(string_type), intent(out) :: app
         type(string_type), intent(out), allocatable :: args(:)
         character(:), allocatable, intent(out) :: type
@@ -32,7 +26,7 @@ contains
         nargs = command_argument_count()
         if (nargs == 0) then
 
-            print *, yellow//"*<WARNNING>*"//default//" Nothing to do .."//NL
+            print *, attr("<y><WARNNING> Nothing to do .."//NL)
             print *, "Usage 1: fpm [options] <test name> --runner vdb [-- ARGS]"
             print *, "Usage 2: vdb [options] [--<input>] ..."//NL
 50          print *, "VDB Version: 0.0.1"
@@ -57,10 +51,10 @@ contains
 
         elseif (trim(buffer) == "--version" .or. to_lower(trim(buffer)) == "-v") then
             goto 50
-            
+
         else
 
-            print *, red//"*<ERROR>*"//default//" Unknown command: "//trim(buffer)//NL
+            print *, attr("<r><ERROR> Unknown command: "//trim(buffer)//NL)
             goto 50
 
         end if
@@ -131,11 +125,11 @@ contains
         if (.not. exist) then
 
             call json%print(filename=dir)
-            print *, NL//"JSON::launch.json file updated!"
+            print *, attr(NL//"<INFO> JSON::launch.json file updated!")
 
         else
 
-            print *, NL//"JSON::launch.json file not updated, since the operation is repeated!"
+            print *, attr(NL//"<INFO> JSON::launch.json file not updated, since the operation is repeated!")
 
         end if
 
@@ -144,7 +138,6 @@ contains
     subroutine construct_json_from_fpm(json, app, args, found)
 
         use stdlib_strings, only: find, slice, replace_all, to_string
-        use forlab_color, only: cyan, green, default, yellow
         type(json_file), intent(inout) :: json
         type(string_type), intent(in) :: app
         type(string_type), intent(in) :: args(:)
@@ -161,8 +154,8 @@ contains
         app_ = replace_all(char(app), "\", "/")
         name = slice(app_, find(app_, "/", 2) + 1)
 
-        print *, cyan//" - Task name  : "//default, name
-        print *, cyan//" - App path   : "//default, app_
+        print *, attr("<g> - Task name  : "), name
+        print *, attr("<g> - App path   : "), app_
 
         i = 0
         do
@@ -186,9 +179,9 @@ contains
         args_ = ""
         if (size(args) == 1) then
             goto 52
-            
+
         elseif (size(args) > 1) then
-        
+
             do j = 1, size(args) - 1
                 args_ = args_//char(args(j))//" "
             end do
@@ -221,7 +214,7 @@ contains
             if (all(check)) then
 
                 found = .true.
-                status = yellow//"Repeated"//default
+                status = "Repeated"
 
                 !> Different and update
             else
@@ -229,7 +222,7 @@ contains
 100             call json%update("configurations("//to_string(i)//").program", app_, found)
                 call json%update("configurations("//to_string(i)//").programArgs", args_, found)
                 found = .false.
-                status = green//merge("Updated", "Created", i /= 1 .and. task_app /= "Launch(gdb)")//default
+                status = merge("Updated", "Created", i /= 1 .and. task_app /= "Launch(gdb)")
 
             end if
 
@@ -249,11 +242,11 @@ contains
             call json%add("configurations("//to_string(i)//").program", app_)
             call json%add("configurations("//to_string(i)//").cwd", "${workspaceRoot}")
             call json%add("configurations("//to_string(i)//").programArgs", args_)
-            status = green//"Created"//default
+            status = "Created"
 
         end if
 
-        print *, cyan//" - Args       : "//default, args_
+        print *, attr("<g> - Args       : "), args_
 
         !> Get the task list
         i = 0
@@ -264,15 +257,31 @@ contains
             if (.not. check(1)) exit
 
             if (task_app == name) then
-                task_app = green//task_app//default
+                task_app = attr("<g>"//task_app)
             end if
 
             args_ = args_//'"'//task_app//'"  '
         end do
 
-        print *, cyan//" - Task status: "//default, status
-        print *, cyan//" - Task list  : "//default, args_
+        print *, attr("<g>"//" - Task status: "), attr("<c>"//status)
+        print *, attr("<g>"//" - Task list  : "), args_
 
     end subroutine construct_json_from_fpm
+
+    !> clean launch.json
+    subroutine vdb_clean()
+        logical :: exist
+
+        inquire (file=dir, exist=exist)
+        if (exist) then
+            call system("mv "//dir//" "//dir//"_bak")
+            print "(a)", attr("<INFO> JSON::luanch.json has removed!")
+
+        else
+            print "(a)", attr("<WARNING> JSON::luanch.json does not exist, nothing to do!")
+
+        end if
+
+    end subroutine vdb_clean
 
 end module context
