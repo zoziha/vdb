@@ -2,7 +2,7 @@
 
 `vdb` is an auxiliary program of `fortran-lang/fpm` to configurate vs code graphical debugger for fpm.
 
-## Get started
+## Getting started
 
 ### Dependencies
 
@@ -37,4 +37,5 @@ vdb clean  # Remove and backup JSON::launch.json
 
 - [json-fortran](https://github.com/jacobwilliams/json-fortran)
 - [test-drive](https://github.com/fortran-lang/test-drive)
+- [stdlib](https://github.com/fortran-lang/stdlib)
 - [fpm](https://github.com/fortran-lang/fpm)

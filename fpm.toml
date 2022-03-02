@@ -1,5 +1,5 @@
 name = "vdb"
-version = "0.0.1"
+version = "0.1.0"
 maintainer = "vdb contributors"
 license = "MIT"
 author = "左志华"
@@ -8,6 +8,11 @@ copyright = "Copyright (c) 左志华"
 
 
 [dependencies]
+
+stdlib_string_type = { git = "https://github.com/degawa/stdlib_modules", branch = "stdlib_string_type-fpm" }
+stdlib_strings = { git = "https://github.com/degawa/stdlib_modules", branch = "stdlib_strings-fpm" }
+stdlib_ascii = { git = "https://github.com/degawa/stdlib_modules", branch = "stdlib_ascii-fpm" }
+
 [dependencies.M_attr]
 git = "https://github.com/urbanjost/M_attr.git"
 rev = "608b9d3b40be9ff2590c23d2089781fd4da76344"
@@ -16,9 +21,6 @@ rev = "608b9d3b40be9ff2590c23d2089781fd4da76344"
 git = "https://github.com/jacobwilliams/json-fortran"
 rev = "77c9f99d7d5c6a0ec9011f7225db3dbb6894ef6d"
 
-[dependencies.dp-stdlib]
-git = "https://github.com/zoziha/dp-stdlib"
-rev = "d317f4d273cb0fcabf532578a7ec0e4687e18700"
 
 [dev-dependencies]
 [dev-dependencies.test-drive]

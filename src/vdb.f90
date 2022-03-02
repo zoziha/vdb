@@ -29,7 +29,7 @@ contains
             print *, attr("<y><WARNNING> Nothing to do .."//NL)
             print *, "Usage 1: fpm [options] <test name> --runner vdb [-- ARGS]"
             print *, "Usage 2: vdb [options] [--<input>] ..."//NL
-50          print *, "VDB Version: 0.0.1"
+50          print *, "VDB Version: 0.1.0"
             print *, "License    : MIT"
             print *, "Repo       : https://github.com/zoziha/vdb"
             print *, "Copyright (c) 2021, VDB Developers"//NL
